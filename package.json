@@ -1,0 +1,30 @@
+{
+  "name": "Filty",
+  "version": "1.0.0",
+  "description": "A ReactJS search box component with filters.",
+  "main": "gulpfile.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://raathigesh@github.com/Raathigesh/Filty.git"
+  },
+  "author": "Raathigeshan Kugarajan",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Raathigesh/Filty/issues"
+  },
+  "homepage": "https://github.com/Raathigesh/Filty",
+  "dependencies": {
+    "react": "^0.13.3"
+  },
+  "devDependencies": {
+    "browserify": "^11.0.0",
+    "gulp": "^3.9.0",
+    "gulp-concat": "^2.6.0",
+    "reactify": "^1.1.1",
+    "vinyl-source-stream": "^1.1.0",
+    "watchify": "^3.3.0"
+  }
+}
