@@ -7,10 +7,10 @@ var SearchBox = React.createClass({
   propTypes: {
     results: React.PropTypes.array,
     onChange: React.PropTypes.func,
-    finalResultsSelected: React.PropTypes.func,
-    startingNewFilter : React.PropTypes.func,
-    startingFilterValue: React.PropTypes.func,
-    newFilterAdded: React.PropTypes.func
+    onFinalResultSelected: React.PropTypes.func,
+    onNewFilterChange : React.PropTypes.func,
+    onNewFilterValueChange: React.PropTypes.func,
+    onNewFilterAdded: React.PropTypes.func
   },
   onFilterChange: function(inProgressFilter){
       // Reopen the search result pane when user starts typing again.
