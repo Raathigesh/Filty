@@ -17,7 +17,10 @@ var paths = {
     scripts: ['js/shell/*.js', 'js/support/*.js']
 
 };
-
+function onError(err) {
+  console.log(err);
+  this.emit('end');
+}
 gulp.task('default', function () {
     "use strict";
     var bundler = browserify({
@@ -33,7 +36,8 @@ gulp.task('default', function () {
     return watcher.on('update', function () { // When any files update
         var updateStart = Date.now();
         console.log('Updating!');
-        watcher.bundle() // Create new bundle that uses the cache for high performance
+          watcher.bundle()
+            .on('error', onError)
             .pipe(source('main.js'))
             .pipe(gulp.dest(bases.concat + 'js/'))
             .pipe(gulp.dest(bases.sample));

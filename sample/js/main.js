@@ -19810,147 +19810,486 @@ module.exports = require('./lib/React');
 
 },{"./lib/React":"E:\\Filty\\node_modules\\react\\lib\\React.js"}],"E:\\Filty\\sample\\js\\app.js":[function(require,module,exports){
 var React = require('react');
-var SearchBox = require("../../src/components/SearchBox");
+var SearchBox = require("../../src/components/Filty");
 
- React.render(React.createElement(SearchBox, null), document.getElementById('search-app'));
+var results = new Array();
+results.push("Project Spartan");
+results.push("Project Manhattan");
+results.push("Project Awesome");
 
-},{"../../src/components/SearchBox":"E:\\Filty\\src\\components\\SearchBox.js","react":"E:\\Filty\\node_modules\\react\\react.js"}],"E:\\Filty\\src\\components\\Filter.js":[function(require,module,exports){
+function change(data){
+    React.render(React.createElement(SearchBox, {
+      results: results, 
+      onChange: change, 
+      outerContainerClass: "searchBoxDiv"}))
+
+      console.log(JSON.stringify(data));
+}
+
+ React.render(React.createElement(SearchBox, {
+   results: results, 
+   onChange: change, 
+   outerContainerClass: "searchBoxDiv", 
+   inputBoxClass: "inProgress_input"}), document.getElementById('search-app'));
+
+},{"../../src/components/Filty":"E:\\Filty\\src\\components\\Filty.js","react":"E:\\Filty\\node_modules\\react\\react.js"}],"E:\\Filty\\src\\components\\Filter.js":[function(require,module,exports){
 var React = require('react');
 
 var Filter = React.createClass({displayName: "Filter",
-   remove: function(){
+  remove: function() {
       this.props.remove(this.props.filter);
-   },
-    render: function () {
+  },
+  render: function () {
       return (React.createElement("div", {className: "filterContainer"}, 
-        React.createElement("div", {className: "filter filter_name"}, this.props.filter), 
-        React.createElement("div", {className: "filter filter_value"}, this.props.value), 
-        React.createElement("div", {className: "filter filter_close", onClick: this.remove}, "x")
-      ));
-    }
+                React.createElement("div", {className: "filter filter_name"}, this.props.filter), 
+                React.createElement("div", {className: "filter filter_value"}, this.props.value), 
+                React.createElement("div", {className: "filter filter_close", onClick: this.remove}, "x")
+              ));
+  }
 });
 
 module.exports =  Filter;
 
 },{"react":"E:\\Filty\\node_modules\\react\\react.js"}],"E:\\Filty\\src\\components\\FilterInProgress.js":[function(require,module,exports){
 var React = require('react');
+var Keyy = require('../util/Keyy');
+var KeyCode = require('../util/Keys');
 
 var FilterInProgress = React.createClass({displayName: "FilterInProgress",
-    getInitialState: function(){
+  propTypes: {
+      add: React.PropTypes.func,
+      up: React.PropTypes.func,
+      down: React.PropTypes.func,
+      onChange: React.PropTypes.func,
+      getFilterFromSearch: React.PropTypes.func,
+      isResultPaneOpen: React.PropTypes.bool
+  },
+  getInitialState: function() {
         return {
-          "isFilter" : true,
-          "isValue": false,
           "filter": null,
           "value": null
         };
     },
-    onFinishContent: function(e){
-      if(e.keyCode === 13){
-        var x = e.target.value;
-        var state = this.state;
-        state.filter = x;
-        state.isFilter = false;
-        state.isValue = true;
-        this.setState(state);
-
-      }
-
+    resetProgressField: function() {
+        this.state.filter = null;
+        this.state.value = null;
+        this.setState(this.state);
     },
-    onFinishValue: function(e){
-        var x = e.target.value;
-      if(e.keyCode === 13){
-
-        var state = this.state;
-        state.value = x;
-        state.isFilter = true;
-        state.isValue = false;
-
+    addNewFilter: function(filterName, filterValue) {
         this.props.add({
-          "filter": this.state.filter,
-          "value": this.state.value
+          "filter": filterName,
+          "value": filterValue
         });
-
-        this.setState(state);
-      }
-      else if(e.keyCode === 8){
-          if(x === ''){
-            var state = this.state;
-            state.value = x;
-            state.isFilter = true;
-            state.isValue = false;
-            this.setState(this.state);
-          }
-      }
-
     },
-    componentDidMount: function(){
-      React.findDOMNode(this.refs.valueBox).focus();
+    onFilterChange: function(e) {
+
+      Keyy.Key(e.keyCode)
+          .When(KeyCode.Enter, function(){
+              if(e.target.value.lastIndexOf('#', 0) === 0) {
+                  if(this.props.isResultPaneOpen){
+                      this.state.filter = this.props.getFilterFromSearch();
+                      this.setState(this.state);
+                  }
+                  else {
+                      this.state.filter = e.target.value;
+                      this.setState(this.state);
+                  }
+              }
+               this.props.closeSearchResults();
+          }.bind(this))
+          .When(KeyCode.UpArrow, this.props.up)
+          .When(KeyCode.DownArrow, this.props.down)
+          .When(KeyCode.Backspace, this.props.removeLastFiter)
+          .When(KeyCode.Escape, this.props.closeSearchResults)
+          .WhenNotAnyOf(KeyCode.UpArrow, KeyCode.DownArrow, KeyCode.RightArrow, KeyCode.LeftArrow, KeyCode.Enter, KeyCode.Escape, function(){
+              this.props.onChange({
+                "filter": e.target.value,
+                "value": null
+              });
+          }.bind(this));
     },
-    componentDidUpdate: function(){
+    onValueChange: function(e) {
+      Keyy.Key(e.keyCode)
+          .When(KeyCode.Enter, function() {
+                if(this.props.isResultPaneOpen) {
+                    this.addNewFilter(this.state.filter, this.props.getFilterFromSearch());
+                    this.props.closeSearchResults();
+                }
+                else {
+                    this.addNewFilter(this.state.filter, e.target.value);
+                }
+
+                this.resetProgressField();
+          }.bind(this))
+          .When(KeyCode.Backspace, function() {
+              if( e.target.value === '') {
+                  this.resetProgressField();
+              }
+          }.bind(this))
+          .When(KeyCode.UpArrow, this.props.up)
+          .When(KeyCode.DownArrow, this.props.down)
+          .WhenNotAnyOf(KeyCode.UpArrow, KeyCode.DownArrow, KeyCode.RightArrow, KeyCode.LeftArrow, function() {
+            this.props.onChange({
+              "filter":this.state.filter,
+              "value": e.target.value
+            });
+          }.bind(this));
+    },
+    componentDidMount: function() {
+        React.findDOMNode(this.refs.valueBox).focus();
+    },
+    componentDidUpdate: function() {
         React.findDOMNode(this.refs.valueBox).focus();
     },
     render: function () {
-      var content;
-      var value = null;
-      if(this.state.isFilter){
-         content = React.createElement("input", {className: "inProgress_input", ref: "valueBox", type: "text", onKeyDown: this.onFinishContent});
+      var filter,
+          value = null;
+
+      if(this.state.filter === null){
+        // Render a text box if user is entring a filter
+        filter = React.createElement("input", {className: this.props.inputBoxClass, ref: "valueBox", type: "text", onKeyDown: this.onFilterChange});
       }
-      else if(this.state.isValue){
-        content = React.createElement("div", {className: "filter filter_name"}, this.state.filter);
-        value = React.createElement("input", {className: "inProgress_input_value", ref: "valueBox", type: "text", onKeyDown: this.onFinishValue});
-      }
-      else{
-        content = React.createElement("div", {className: "filter filter_name"}, this.state.filter);
-        value = React.createElement("div", {className: "filter filter_name"}, this.state.value);
+      else if(this.state.value === null){
+        // If user is entering a value for the filter, show the filter and show a text box
+        filter = React.createElement("div", {className: "filter filter_name"}, this.state.filter);
+        value = React.createElement("input", {className: "inProgress_input_value", ref: "valueBox", type: "text", onKeyDown: this.onValueChange});
       }
 
       return (React.createElement("div", null, 
-                content, 
+                filter, 
                 value
               ));
     }
-  });
+});
 
 module.exports =  FilterInProgress;
 
-},{"react":"E:\\Filty\\node_modules\\react\\react.js"}],"E:\\Filty\\src\\components\\SearchBox.js":[function(require,module,exports){
+},{"../util/Keys":"E:\\Filty\\src\\util\\Keys.js","../util/Keyy":"E:\\Filty\\src\\util\\Keyy.js","react":"E:\\Filty\\node_modules\\react\\react.js"}],"E:\\Filty\\src\\components\\Filty.js":[function(require,module,exports){
 var React = require('react');
 var Filter = require('./Filter');
 var FilterInProgress = require('./FilterInProgress');
+var SearchResult = require('./SearchResult');
 
 var SearchBox = React.createClass({displayName: "SearchBox",
-  getInitialState: function(){
-      return {
-        "filters": new Array()
+  propTypes: {
+    results: React.PropTypes.array,
+    onChange: React.PropTypes.func,
+    finalResultsSelected: React.PropTypes.func,
+    startingNewFilter : React.PropTypes.func,
+    startingFilterValue: React.PropTypes.func,
+    newFilterAdded: React.PropTypes.func
+  },
+  onFilterChange: function(inProgressFilter){
+      // Reopen the search result pane when user starts typing again.
+      this.refs.searchResult.openResultsPane();
+
+      // Create the output object and send out.
+      var output = {
+          "filters" : this.state.filters,
+          "inProgressFilter": inProgressFilter.filter,
+          "inProgressValue": inProgressFilter.value
       };
+      this.props.onChange(output);
+  },
+  getInitialState: function(){
+    return {
+      "filters": new Array()
+    };
+  },
+  componentDidMount: function(){
+      this.refs.searchResult.closeResultsPane();
   },
   addFilter: function(filter){
-      this.state.filters.push(filter);
-      this.setState(this.state)
+    // Add a new filter to the search bar
+    this.state.filters.push(filter);
+    this.setState(this.state);
   },
   removeFilter: function(filterName){
-      for(var i = 0; i < this.state.filters.length; i++){
-        if(this.state.filters[i].filter === filterName){
-          this.state.filters.splice(i, 1);
-        }
+    // Remove an existing filter from the search bar
+    for(var i = 0; i < this.state.filters.length; i++){
+      if(this.state.filters[i].filter === filterName){
+        this.state.filters.splice(i, 1);
       }
-
-      this.setState(this.state);
+    }
+    this.setState(this.state);
+  },
+  up:function(){
+    // Move up in the search result pane
+    this.refs.searchResult.up();
+  },
+  down: function(){
+    // Move down in the search result pane
+    this.refs.searchResult.down();
+  },
+  getFilterFromSearch: function(){
+    // Get the filer object that is actively selected from the search pane.
+    return this.refs.searchResult.getSelected();
+  },
+  removeLastFiter: function(){
+    // Remove the last filter from the search box.
+    this.state.filters.splice(this.state.filters.length - 1, 1);
+    this.setState(this.state);
+  },
+  closeSearchResults: function(){
+    // Close the search pane.
+    this.refs.searchResult.closeResultsPane();
+  },
+  openSearchResults: function(){
+    // Open the search pane.
+    this.refs.searchResult.openResultsPane();
   },
   render: function () {
-      var filters;
+    var filters = this.state.filters.map(function(a){
+                    return React.createElement(Filter, {filter: a.filter, value: a.value, remove: this.removeFilter})
+                  }, this);
 
-      filters = this.state.filters.map(function(a){
-        return React.createElement(Filter, {filter: a.filter, value: a.value, remove: this.removeFilter})
-      }, this)
-
-      return React.createElement("div", {className: "searchBoxDiv"}, 
-               filters, 
-               React.createElement(FilterInProgress, {add: this.addFilter})
-            );
+    return (React.createElement("div", null, 
+              React.createElement("div", {className: this.props.outerContainerClass}, 
+                filters, 
+                React.createElement(FilterInProgress, {
+                        inputBoxClass: this.props.inputBoxClass, 
+                        add: this.addFilter, 
+                        onChange: this.onFilterChange, 
+                        up: this.up, 
+                        down: this.down, 
+                        isResultPaneOpen: this.props.results.length > 0, 
+                        getFilterFromSearch: this.getFilterFromSearch, 
+                        removeLastFiter: this.removeLastFiter, 
+                        closeSearchResults: this.closeSearchResults})
+              ), 
+              React.createElement(SearchResult, {ref: "searchResult", results: this.props.results})
+          ));
     }
 });
 
 module.exports =  SearchBox;
 
-},{"./Filter":"E:\\Filty\\src\\components\\Filter.js","./FilterInProgress":"E:\\Filty\\src\\components\\FilterInProgress.js","react":"E:\\Filty\\node_modules\\react\\react.js"}]},{},["E:\\Filty\\sample\\js\\app.js"]);
+},{"./Filter":"E:\\Filty\\src\\components\\Filter.js","./FilterInProgress":"E:\\Filty\\src\\components\\FilterInProgress.js","./SearchResult":"E:\\Filty\\src\\components\\SearchResult.js","react":"E:\\Filty\\node_modules\\react\\react.js"}],"E:\\Filty\\src\\components\\SearchResult.js":[function(require,module,exports){
+var React = require('react');
+var SearchResultItem = require('./SearchResultItem');
+
+var SearchResult = React.createClass({displayName: "SearchResult",
+  propTypes: {
+    results: React.PropTypes.array
+  },
+  getInitialState: function(){
+     return {
+       currentActiveItemIndex: -1,
+       activeitem: null,
+       isSearchPanelOpen: true
+
+     };
+  },
+  up: function(){
+    if(this.state.currentActiveItemIndex > 0){
+        this.state.currentActiveItemIndex--;
+        this.setState(this.state);
+    }
+  },
+  down: function(){
+    if(this.state.currentActiveItemIndex < this.props.results.length -1){
+        this.state.currentActiveItemIndex++;
+        this.setState(this.state);
+    }
+  },
+  getSelected: function(){
+      return this.state.activeitem;
+  },
+  closeResultsPane: function(){
+    this.state.isSearchPanelOpen = false;
+    this.setState(this.state);
+  },
+  openResultsPane: function(){
+    if(this.props.results.length > 0){
+      this.state.isSearchPanelOpen = true;
+      this.setState(this.state);
+    }
+  },
+  render: function () {
+    var dom = null;
+
+    if(this.state.isSearchPanelOpen){
+
+          var results = this.props.results.map(function(result, i) {
+                var isActive = i === this.state.currentActiveItemIndex;
+                if(isActive){
+                    this.state.activeitem = result;
+                }
+
+                return React.createElement(SearchResultItem, {text: result, isActive: isActive})
+          }, this);
+
+          var dom = React.createElement("div", {className: "searchResults"}, 
+                    React.createElement("div", null, 
+                        React.createElement("ul", null, 
+                            results
+                        )
+                    )
+                  );
+      }
+
+      return dom;
+    }
+});
+
+module.exports =  SearchResult;
+},{"./SearchResultItem":"E:\\Filty\\src\\components\\SearchResultItem.js","react":"E:\\Filty\\node_modules\\react\\react.js"}],"E:\\Filty\\src\\components\\SearchResultItem.js":[function(require,module,exports){
+var React = require('react');
+
+var SearchResultItem = React.createClass({displayName: "SearchResultItem",
+
+    render: function () {
+      var classes = "searchItem";
+
+      if(this.props.isActive){
+         classes += " activeSearchResult";          
+      }
+
+      return (React.createElement("div", {ref: "itemContainer", className: classes}, 
+               React.createElement("p", null, this.props.text)
+            ) );
+    }
+});
+
+module.exports =  SearchResultItem;
+},{"react":"E:\\Filty\\node_modules\\react\\react.js"}],"E:\\Filty\\src\\util\\Keys.js":[function(require,module,exports){
+var Keys = {
+  Backspace: 8,
+  Tab: 9,
+  Enter: 13,
+  Shift: 16,
+  Ctrl: 17,
+  Alt: 18,
+  CapsLock:	20,
+  Escape:	27,
+  PageUp:	33,
+  PageDown:	34,
+  End: 35,
+  Home:	36,
+  LeftArrow: 37,
+  UpArrow: 38,
+  RightArrow:	39,
+  DownArrow:	40,
+  Insert:	45,
+  Delete:	46,
+  0:	48,
+  1:	49,
+  2:	50,
+  3:	51,
+  4:	52,
+  5:	53,
+  6:	54,
+  7:	55,
+  8:	56,
+  9:	57,
+  A:	65,
+  B:	66,
+  C:  67,
+  D:	68,
+  E:	69,
+F:	70,
+G:	71,
+H:	72,
+I:	73,
+J:	74,
+K:	75,
+L:	76,
+M:	77,
+N:	78,
+O:	79,
+P:	80,
+Q:	81,
+R:	82,
+S:	83,
+T:	84,
+U:	85,
+V:	86,
+W:	87,
+X:	88,
+Y:	89,
+Z:	90,
+LeftWindowKey:	91,
+RightWindowKey:	92,
+Numpad0:	96,
+Numpad1:	97,
+Numpad2:	98,
+Numpad3:	99,
+Numpad4:	100,
+Numpad5:	101,
+Numpad6:	102,
+Numpad7:	103,
+Numpad8:	104,
+Numpad9:	105,
+Multiply:	106,
+Add:	107,
+Subtract:	109,
+DecimalPoint:	110,
+Divide:	111,
+F1:	112,
+F2:	113,
+F3:	114,
+F4:	115,
+F5:	116,
+F6:	117,
+F7:	118,
+F8:	119,
+F9:	120,
+F10:	121,
+F11:	122,
+F12:	123,
+NumLock:	144,
+ScrollLock:	145,
+SemiColon:	186,
+Equal:	187,
+Comma:	188,
+Dash:	189,
+Period:	190,
+ForwardSlash:	191,
+GraveAccent:	192,
+OpenBracket:	219,
+BackSlash:	220,
+CloseBraket:	221,
+SingleQuote:	222
+}
+
+module.exports = Keys;
+
+},{}],"E:\\Filty\\src\\util\\Keyy.js":[function(require,module,exports){
+var Keyy = (function(){
+  var currentKey,
+  _IsKeyInArray = function(array){
+    var results = false;
+    for(var i = 0; i < array.length - 1; i++) {
+        if(currentKey === array[i]){
+            results = true;
+            break;
+        }
+    }
+    return results;
+  },
+  Key = function(key){
+    currentKey = key;
+    return this;
+  },
+  When = function(key, callback){
+    if(currentKey == key){
+      callback();
+    }
+    return this;
+  },
+  WhenNotAnyOf = function(){
+      if(!_IsKeyInArray(arguments)){
+        arguments[arguments.length - 1]();
+      }
+  };
+
+  return {
+    Key: Key,
+    When: When,
+    WhenNotAnyOf: WhenNotAnyOf
+  };
+}());
+
+module.exports = Keyy;
+
+},{}]},{},["E:\\Filty\\sample\\js\\app.js"]);

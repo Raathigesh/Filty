@@ -23,6 +23,7 @@
     "browserify": "^11.0.0",
     "gulp": "^3.9.0",
     "gulp-concat": "^2.6.0",
+    "gulp-plumber": "^1.0.1",
     "reactify": "^1.1.1",
     "vinyl-source-stream": "^1.1.0",
     "watchify": "^3.3.0"
