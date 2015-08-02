@@ -15,7 +15,7 @@ Results that should be shown in the auto complete dropdown list. Please note tha
 ###onChange
 Will fier when ever something changes in the search box.
 
-###onFinalResultsSelected
+###onFinalResultSelected
 Will fire when user selects the search result from the suggestions after adding all the filters.
 
 ###onNewFilterChange
